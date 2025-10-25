@@ -1,15 +1,27 @@
 from sqlalchemy import create_engine, text
 import os
+from urllib.parse import urlparse, urlunparse, parse_qs, urlencode
 
 db_connection_string = os.environ['DB_CONNECTION_STRING']
 
-engine = create_engine(
-  db_connection_string, 
-  connect_args={
-    "ssl": {
-      "ssl_ca": os.environ['DB_SSL_CERTIFICATE']
-    }
-  })
+parsed = urlparse(db_connection_string)
+query_params = parse_qs(parsed.query)
+query_params.pop('ssl-mode', None)
+query_params.pop('sslmode', None)
+new_query = urlencode(query_params, doseq=True)
+cleaned_connection_string = urlunparse((
+    parsed.scheme,
+    parsed.netloc,
+    parsed.path,
+    parsed.params,
+    new_query,
+    parsed.fragment
+))
+
+if cleaned_connection_string.startswith('mysql://'):
+    cleaned_connection_string = cleaned_connection_string.replace('mysql://', 'mysql+pymysql://', 1)
+
+engine = create_engine(cleaned_connection_string)
 
 
 def load_jobs_from_db():
