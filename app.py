@@ -14,13 +14,11 @@ def list_jobs():
   jobs = load_jobs_from_db()
   return jsonify(jobs)
 
-@app.route("/job/<id>")
-def show_job(id):
-  job = load_job_from_db(id)
-  
+@app.route("/job/<jid>")
+def show_job(jid):
+  job = load_job_from_db(jid)
   if not job:
-    return "Not Found", 404
-  
+    return render_template('404.html')
   return render_template('jobpage.html', 
                          job=job)
 
